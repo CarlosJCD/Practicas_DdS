@@ -55,7 +55,7 @@ class Escritor:
 
     def registrar_cuenta(self,info_cuenta: dict, num_cliente: int):
         cuenta_path = f"{self.base_path}{num_cliente}/{info_cuenta.get('numCuenta')}.json"
-        with open(cuenta_path,"w") as fp:
+        with open(cuenta_path,"w", encoding="utf-8") as fp:
             dump(info_cuenta, fp = fp)
         self.logger.log_cuenta_nueva(info_cuenta.get("numCuenta"))
 
@@ -78,6 +78,7 @@ class Escritor:
     def eliminar_cuenta(self, num_cliente: int, num_cuenta: int):
         cuenta_path = f"{self.base_path}{num_cliente}/{num_cuenta}.json"
         eliminados_path = f"{self.base_path}{num_cliente}/cuentas_eliminadas"
+        
         if not exists(eliminados_path):
             mkdir(eliminados_path)
         move(cuenta_path,eliminados_path)
