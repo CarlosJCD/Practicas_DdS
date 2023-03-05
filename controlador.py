@@ -1,13 +1,18 @@
 from re import compile, sub
 from excepciones import ClienteExistente, CuentaExistente, CredencialesInvalidas, CuentaConSaldo
 from modelo import Escritor, Lector, Logger
-from os import listdir
+from os import mkdir,listdir
+from os.path import exists
 
 class Controlador:
-    def __init__(self):
-        self.__base_path = "Clientes/"
-        self.__escritor: Escritor = Escritor()
-        self.__lector: Lector = Lector()
+    def __init__(self, 
+                 base_path: str = "Clientes/", 
+                 password = "contraseña"):
+        self.__base_path = base_path
+        if not exists(base_path):
+            mkdir(base_path)
+        self.__escritor: Escritor = Escritor(base_path=base_path, password=password)
+        self.__lector: Lector = Lector(base_path=base_path, password=password)
         self.__logger: Logger = Logger()
 
     def __validar_credenciales(self, num_cliente: int, num_cuenta: int, nombre: str, saldo: float):
@@ -30,9 +35,9 @@ class Controlador:
         if str(num_cliente) in listdir(self.__base_path):
             raise ClienteExistente(f"Cliente #{num_cliente} ya registrado")
          
-        self.__escritor.registrar_cliente({"numCliente": num_cliente,"nombre": nombre,})
+        self.__escritor.registrar_cliente({"numCliente": num_cliente,"nombre": nombre})
         self.__logger.log_cliente_nuevo(num_cliente)
-        self.crear_cuenta(num_cliente, num_cuenta, saldo)       
+        self.crear_cuenta(num_cliente, num_cuenta, saldo)
 
     def crear_cuenta(self, num_cliente: int, num_cuenta: int, saldo: float = 0.0):
         for cliente in [cliente for cliente in listdir(self.__base_path) if cliente != "log.txt"]:
@@ -58,15 +63,15 @@ class Controlador:
         patron_num = compile("^\d{16}$")
         patron_saldo = compile("^\d*.\d*$")
 
-        if patron_num.search(num_cliente) and patron_num.search(num_cuenta) and patron_saldo.search(saldo):
+        if patron_num.search(str(num_cliente)) and patron_num.search(str(num_cuenta)) and patron_saldo.search(str(saldo)):
             self.__escritor.actualizar_cuenta(num_cliente,num_cuenta,"saldo",saldo,self.__lector.leer_cuenta(num_cliente,num_cuenta))
             self.__logger.log_cuenta_actualizado(num_cuenta,"Saldo",saldo)
         else:
-            if not patron_num.search(num_cuenta):
+            if not patron_num.search(str(num_cuenta)):
                 raise CredencialesInvalidas(credencial= "Num. Cuenta", valor = num_cuenta)
-            if not patron_num.search(num_cliente):
+            if not patron_num.search(str(num_cliente)):
                 raise CredencialesInvalidas(credencial = "Num. Cliente", valor= num_cliente)
-            if not patron_saldo.search(saldo):
+            if not patron_saldo.search(str(saldo)):
                 raise CredencialesInvalidas(credencial = "Saldo", valor= saldo)
 
     def eliminar_cuenta(self,num_cliente: int, num_cuenta: int):
